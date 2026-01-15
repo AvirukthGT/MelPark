@@ -15,6 +15,7 @@ x-airflow-common: &airflow-common
     - ../processing:/opt/airflow/processing
     - ../ingestion:/opt/airflow/ingestion
     - ../data:/opt/airflow/data
+    - /var/run/docker.sock:/var/run/docker.sock
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     - postgres_airflow
@@ -38,6 +39,8 @@ services:
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow_webserver
+    # OVERRIDE here too
+    user: root
     command: webserver
     ports:
       - "8080:8080"
@@ -50,6 +53,8 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     container_name: airflow_scheduler
+    # OVERRIDE the common user setting to run as root
+    user: root
     command: scheduler
 
   airflow-init:

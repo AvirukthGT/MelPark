@@ -1,18 +1,14 @@
 import sys
 import os
-
-# 1. Add the project root to Python's search path
-# I need to do this so Airflow can find my 'ingestion' module, which is in the parent directory.
-sys.path.append("/opt/airflow")
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator  # <--- NEW IMPORT
 from datetime import datetime
 from ingestion.parking_api import ingest_api_data
-from processing.postgres_loader import load_to_postgres
 
-# Note: I removed the '?limit=20' from these URLs because the script adds it manually
-# I'm defining my API sources here. This EXPORTS endpoint is great because it gives me everything
-# without needing to paginate.
+# Note: We REMOVED 'from processing.postgres_loader import load_to_postgres' 
+# because we are using Spark now.
+
 API_SOURCES = [
     {
         "name": "parking_sensors",
@@ -36,30 +32,38 @@ API_SOURCES = [
     },
 ]
 
-# I'm setting up the DAG here. I set catchup=False because I don't want to run a bunch of old
-# backfills if I pause the DAG.
 with DAG(
-    dag_id="melbourne_parking_elt",
+    dag_id="melbourne_parking_elt_spark", # Changed ID to indicate Spark
     start_date=datetime(2026, 1, 14),
     schedule_interval="@daily",
     catchup=False,
-    tags=["melbourne", "elt"],
+    tags=["melbourne", "elt", "spark"],
+    
 ) as dag:
 
     for source in API_SOURCES:
 
-        # Task 1: Get Data
+        # Task 1: Ingest (Stays the same - Python downloads JSON to /data/raw)
         task_ingest = PythonOperator(
             task_id=f"ingest_{source['name']}",
             python_callable=ingest_api_data,
             op_kwargs={"url": source["url"], "filename_prefix": source["name"]},
         )
 
-        # Task 2: Load Data
-        task_load = PythonOperator(
-            task_id=f"load_{source['name']}",
-            python_callable=load_to_postgres,
-            op_kwargs={"filename_prefix": source["name"]},
+        # Task 2: Load (UPDATED - Triggers Spark Container)
+        # This command tells the 'spark_master' container to run your script
+        # Task 2: Load (One-line version to prevent formatting errors)
+        spark_submit_cmd = (
+            f"docker exec spark_master /opt/spark/bin/spark-submit "
+            f"--master local[*] "
+            f"--driver-memory 8g "
+            f"--jars /opt/spark-jars/postgresql-42.7.2.jar "
+            f"/opt/spark-apps/spark_loader.py {source['name']}"
+        )
+
+        task_load = BashOperator(
+            task_id=f"load_spark_{source['name']}",
+            bash_command=spark_submit_cmd
         )
 
         # Dependency
