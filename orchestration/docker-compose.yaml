@@ -7,10 +7,14 @@ x-airflow-common: &airflow-common
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_airflow/${POSTGRES_DB}
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW_HOME: /opt/airflow
+    PYTHONPATH: /opt/airflow
   volumes:
     - ./dags:/opt/airflow/dags
     - ./scripts:/opt/airflow/scripts
     - ./logs:/opt/airflow/logs
+    - ../processing:/opt/airflow/processing
+    - ../ingestion:/opt/airflow/ingestion
+    - ../data:/opt/airflow/data
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     - postgres_airflow
