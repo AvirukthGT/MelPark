@@ -26,7 +26,6 @@ jobs:
         run: black --check .
 
       - name: Run Flake8 (Syntax Check)
-        # E501 ignores line length errors (common in SQL/Data work)
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --ignore=E501
 
   # JOB 2: API Health Check (Postman/Newman)
@@ -36,16 +35,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Node & Newman
+      - name: Install Node
         uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - run: npm install -g newman
+
+      - name: Install Newman
+        run: npm install -g newman
 
       - name: Run Postman Tests
-       
-          newman run tests/postman/parking_api_collection.json
-          
+        run: newman run tests/postman/parking_api_collection.json
 
   # JOB 3: Docker Build (Safety Check)
   docker-build:

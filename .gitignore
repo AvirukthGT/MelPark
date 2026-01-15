@@ -7,3 +7,6 @@ venv/
 # Docker/Airflow
 /orchestration/logs/
 /orchestration/plugins/
+
+# Data
+data/
