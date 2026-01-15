@@ -54,11 +54,8 @@ with DAG(
         # This command tells the 'spark_master' container to run your script
         # Task 2: Load (One-line version to prevent formatting errors)
         spark_submit_cmd = (
-            f"docker exec spark_master /opt/spark/bin/spark-submit "
-            f"--master local[*] "
-            f"--driver-memory 8g "
-            f"--jars /opt/spark-jars/postgresql-42.7.2.jar "
-            f"/opt/spark-apps/spark_loader.py {source['name']}"
+            f"PYTHONPATH=/opt/airflow:/home/airflow/.local/lib/python3.8/site-packages "
+            f"python3 /opt/airflow/processing/spark_loader.py {source['name']}"
         )
 
         task_load = BashOperator(
