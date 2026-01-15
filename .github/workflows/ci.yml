@@ -1,0 +1,59 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # JOB 1: Python Code Quality
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install Linting Tools
+        run: pip install flake8 black
+
+      - name: Run Black (Formatter Check)
+        run: black --check .
+
+      - name: Run Flake8 (Syntax Check)
+        # E501 ignores line length errors (common in SQL/Data work)
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --ignore=E501
+
+  # JOB 2: API Health Check (Postman/Newman)
+  api-health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Node & Newman
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - run: npm install -g newman
+
+      - name: Run Postman Tests
+       
+          newman run tests/postman/parking_api_collection.json
+          
+
+  # JOB 3: Docker Build (Safety Check)
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [linting, api-health-check]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build . --file Dockerfile
