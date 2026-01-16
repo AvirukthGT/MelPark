@@ -3,18 +3,21 @@ import json
 import os
 import time
 
+
 # --- 1. First, I'm loading the Environment Variables manually ---
 def load_env_file(filepath):
     if not os.path.exists(filepath):
         print(f"Warning: .env file not found at {filepath}")
         return
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith('#'): continue
-            if '=' in line:
-                key, value = line.split('=', 1)
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                key, value = line.split("=", 1)
                 os.environ[key.strip()] = value.strip().strip("'").strip('"')
+
 
 # I'm loading the .env file from the current directory right here.
 load_env_file(".env")
@@ -39,11 +42,11 @@ source_config = {
         "database.user": POSTGRES_USER,
         "database.password": POSTGRES_PASSWORD,
         "database.dbname": "parking_db",
-        "topic.prefix": "parking", 
+        "topic.prefix": "parking",
         "table.include.list": "public.raw_parking_sensors",
         "plugin.name": "pgoutput",
-        "slot.name": "debezium_slot"
-    }
+        "slot.name": "debezium_slot",
+    },
 }
 
 # B. Sink Connector: Now, I'm configuring the sink to move data from Kafka to Azure Blob Storage.
@@ -61,37 +64,45 @@ sink_config = {
         "azblob.account.key": AZURE_KEY,
         "azblob.container.name": "bronze",
         # I'm switching to JSON format here to make testing these files easier.
-        "format.class": "io.confluent.connect.azure.blob.format.json.JsonFormat", 
+        "format.class": "io.confluent.connect.azure.blob.format.json.JsonFormat",
         "confluent.topic.bootstrap.servers": "kafka:29092",
-        "confluent.topic.replication.factor": "1"
-    }
+        "confluent.topic.replication.factor": "1",
+    },
 }
+
 
 # --- 3. Here is the function I use to register the connectors ---
 def register_connector(config):
     url = "http://localhost:8083/connectors"
-    headers = {'Content-Type': 'application/json'}
-    name = config['name']
-    
+    headers = {"Content-Type": "application/json"}
+    name = config["name"]
+
     try:
         # I'll check if it acts already so I don't try to create a duplicate.
         response = requests.get(f"{url}/{name}")
         if response.status_code == 200:
             print(f"Connector '{name}' already exists. Updating config...")
-            resp = requests.put(f"{url}/{name}/config", headers=headers, data=json.dumps(config['config']))
+            resp = requests.put(
+                f"{url}/{name}/config",
+                headers=headers,
+                data=json.dumps(config["config"]),
+            )
             print(f"Update status: {resp.status_code}")
         else:
             print(f"Creating connector '{name}'...")
             resp = requests.post(url, headers=headers, data=json.dumps(config))
             print(f"Creation status: {resp.status_code} - {resp.text}")
-            
+
     except Exception as e:
         print(f"Failed to connect to Debezium: {e}")
+
 
 if __name__ == "__main__":
     print("--- Starting Debezium Setup ---")
     register_connector(source_config)
-    time.sleep(2) # Give it a moment
+    time.sleep(2)  # Give it a moment
     register_connector(sink_config)
     print("--- Setup Complete ---")
-    print("Check status at: curl http://localhost:8083/connectors/parking-sensors-sink/status")
+    print(
+        "Check status at: curl http://localhost:8083/connectors/parking-sensors-sink/status"
+    )
