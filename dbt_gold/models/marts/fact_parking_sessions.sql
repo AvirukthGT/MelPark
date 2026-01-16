@@ -1,8 +1,7 @@
 with sensor_events as (
     select
         bay_id,
-        status, -- 1=Occupied, 0=Unoccupied
-        -- FIXED: Changed 'status_timestamp' to 'event_time'
+        status, 
         cast(event_time as timestamp) as event_time
     from {{ source('melpark', 'parking_sensors') }}
 ),
@@ -12,7 +11,7 @@ status_pairs as (
         bay_id,
         status as start_status,
         event_time as start_time,
-        -- Look ahead to find the very next status for this bay
+        -- Look ahead to find when the status changed
         lead(status) over (partition by bay_id order by event_time) as next_status,
         lead(event_time) over (partition by bay_id order by event_time) as end_time
     from sensor_events
@@ -32,6 +31,9 @@ select
     current_timestamp() as load_timestamp
 
 from status_pairs
-where start_status = 1  -- Someone Arrived
-  and next_status = 0   -- And then they Left
-  and end_time is not null -- Filter incomplete sessions
+-- UPDATED LOGIC:
+-- A "Session" starts when a car is 'Present' 
+-- and ends when the next recorded status is 'Unoccupied'
+where start_status = 'Present'  
+  and next_status = 'Unoccupied'
+  and end_time is not null

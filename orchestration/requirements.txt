@@ -1,0 +1,6 @@
+apache-airflow-providers-microsoft-azure
+apache-airflow-providers-apache-kafka
+apache-airflow-providers-databricks
+psycopg2-binary
+requests
+pyspark==3.5.0

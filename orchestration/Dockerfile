@@ -24,6 +24,7 @@ RUN curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${
 RUN groupadd -g 999 docker || true && \
     usermod -aG docker airflow
 
+
 # Set JAVA_HOME environment variable (standard path for default-jdk)
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
@@ -31,9 +32,6 @@ USER airflow
 
 # 4. Install Python Providers + PySpark
 # Added pyspark to match your Spark Cluster version (3.5.0)
-RUN pip install --no-cache-dir \
-    apache-airflow-providers-microsoft-azure \
-    apache-airflow-providers-apache-kafka \
-    psycopg2-binary \
-    requests \
-    pyspark==3.5.0
+COPY requirements.txt /requirements.txt
+
+RUN pip install --no-cache-dir -r /requirements.txt

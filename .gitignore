@@ -10,3 +10,6 @@ venv/
 
 # Data
 data/
+postgres_data/pg_logical/
+postgres_data/pg_replslot/
+.venv/
