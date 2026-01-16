@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: melpark
+    # 1. The Unity Catalog Name
+    database: melpark_azure
+    
+    # 2. The Schema Name where we saved the tables
+    schema: silver
+    
+    # 3. The actual table names (without the 'silver_' prefix we used in Python variables)
+    tables:
+      - name: parking_bays
+      - name: parking_meters
+      - name: parking_zones_plates
+      - name: parking_restrictions
+      - name: parking_sensors
