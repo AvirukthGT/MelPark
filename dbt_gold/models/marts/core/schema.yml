@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: fact_parking_sessions
+    description: "One row per completed parking event"
+    columns:
+      - name: session_id
+        tests:
+          - unique
+          - not_null
+      - name: duration_minutes
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "duration_minutes >= 0" 
+      - name: bay_id
+        tests:
+          - relationships:
+              to: ref('dim_bays')
+              field: bay_id
+
+  - name: dim_bays
+    columns:
+      - name: latitude
+        tests:
+          - not_null
+      - name: bay_id
+        tests:
+          - unique
+          - not_null
+
+      - name: duration_minutes
+        tests:
+          - is_realistic_duration
