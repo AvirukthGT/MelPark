@@ -6,7 +6,7 @@ from airflow.operators.bash import BashOperator  # <--- NEW IMPORT
 from datetime import datetime
 from ingestion.parking_api import ingest_api_data
 
-# Note: We REMOVED 'from processing.postgres_loader import load_to_postgres' 
+# Note: We REMOVED 'from processing.postgres_loader import load_to_postgres'
 # because we are using Spark now.
 
 API_SOURCES = [
@@ -33,12 +33,11 @@ API_SOURCES = [
 ]
 
 with DAG(
-    dag_id="melbourne_parking_elt_spark", # Changed ID to indicate Spark
+    dag_id="melbourne_parking_elt_spark",  # Changed ID to indicate Spark
     start_date=datetime(2026, 1, 14),
     schedule_interval="@daily",
     catchup=False,
     tags=["melbourne", "elt", "spark"],
-    
 ) as dag:
 
     for source in API_SOURCES:
@@ -59,8 +58,7 @@ with DAG(
         )
 
         task_load = BashOperator(
-            task_id=f"load_spark_{source['name']}",
-            bash_command=spark_submit_cmd
+            task_id=f"load_spark_{source['name']}", bash_command=spark_submit_cmd
         )
 
         # Dependency
