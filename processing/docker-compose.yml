@@ -41,6 +41,11 @@ services:
       - CONFIG_STORAGE_TOPIC=my_connect_configs
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - STATUS_STORAGE_TOPIC=my_connect_statuses
+      # FIX 1: Look in BOTH the default folder AND our new custom folder
+      - CONNECT_PLUGIN_PATH=/kafka/connect,/kafka/custom-plugins
+    volumes:
+      # FIX 2: Mount to a NEW folder (/kafka/custom-plugins), NOT /kafka/connect
+      - ../orchestration/connect-plugins:/kafka/custom-plugins
     networks:
       - parking-network
 
